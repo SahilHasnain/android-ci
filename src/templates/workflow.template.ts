@@ -9,6 +9,7 @@ interface WorkflowTemplateOptions {
 }
 
 export function workflowTemplate(options: WorkflowTemplateOptions): string {
+  const playJsonPath = "/home/Sahilhasnain/android-secrets/play-store-key.json";
   const sentryStep = options.enableSentry
     ? `      - name: Configure optional Sentry
         if: \${{ vars.SENTRY_ORG != '' && vars.SENTRY_PROJECT != '' }}
@@ -27,7 +28,7 @@ export function workflowTemplate(options: WorkflowTemplateOptions): string {
         if: \${{ github.event_name == 'workflow_dispatch' && env.APP_VARIANT == 'production' }}
         env:
           SENTRY_AUTH_TOKEN: \${{ secrets.SENTRY_AUTH_TOKEN }}
-          SUPPLY_JSON_KEY: \${{ github.workspace }}/${options.androidProjectPath}/fastlane/play-store-key.json
+          SUPPLY_JSON_KEY: \${{ vars.PLAY_STORE_JSON_KEY_PATH || '${playJsonPath}' }}
           ANDROID_APPLICATION_ID: \${{ vars.ANDROID_APPLICATION_ID || '${options.androidApplicationId}' }}
           PLAY_TRACK: \${{ vars.PLAY_TRACK || 'internal' }}
           SKIP_ANDROID_BUILD: "true"
@@ -86,14 +87,6 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-
-      - name: Prepare signing and deploy files
-        run: |
-          mkdir -p ${options.androidProjectPath}/app ${options.androidProjectPath}/fastlane
-          # TODO: Replace or extend these secret names for your repo.
-          if [ -n "\${{ secrets.PLAY_STORE_JSON_KEY_BASE64 }}" ]; then
-            printf '%s' "\${{ secrets.PLAY_STORE_JSON_KEY_BASE64 }}" | tr -d '\\r\\n' | base64 -d > ${options.androidProjectPath}/fastlane/play-store-key.json
-          fi
 
       - name: Configure Android SDK path
         run: |
