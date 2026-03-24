@@ -57,7 +57,14 @@ ${options.enablePlayDeploy ? "- \\`PLAY_STORE_JSON_KEY_PATH\\`\n" : ""}${options
 
 1. Confirm the shared VM already has the expected key files.
 2. Add the repo secrets above.
-3. Review \`.github/workflows/android-self-hosted.yml\`.
-4. Trigger a preview build first, then production.
+3. If your keystore \`.jks\` is in this repo root, copy it to the VM:
+
+\`\`\`powershell
+ssh -i .\\ssh_key Sahilhasnain@98.70.32.91 "mkdir -p /home/Sahilhasnain/android-secrets && chmod 700 /home/Sahilhasnain/android-secrets"
+scp -i .\\ssh_key ".\\your-release-key.jks" Sahilhasnain@98.70.32.91:/home/Sahilhasnain/android-secrets/release.keystore
+\`\`\`
+
+4. Review \`.github/workflows/android-self-hosted.yml\`.
+5. Trigger a preview build first, then production.
 `;
 }
