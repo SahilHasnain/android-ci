@@ -79,7 +79,7 @@ Recommended location:
 
 Recommended files:
 
-- `/home/Sahilhasnain/android-secrets/release.keystore`
+- `/home/Sahilhasnain/android-secrets/<project>/release.keystore`
 - `/home/Sahilhasnain/android-secrets/play-store-key.json`
 
 If your Android keystore file already exists in a repo root as a `.jks` file, copy it to the VM with SSH:
@@ -87,6 +87,13 @@ If your Android keystore file already exists in a repo root as a `.jks` file, co
 ```powershell
 ssh -i .\ssh_key Sahilhasnain@98.70.32.91 "mkdir -p /home/Sahilhasnain/android-secrets && chmod 700 /home/Sahilhasnain/android-secrets"
 scp -i .\ssh_key ".\your-release-key.jks" Sahilhasnain@98.70.32.91:/home/Sahilhasnain/android-secrets/release.keystore
+```
+
+Recommended per-project version:
+
+```powershell
+ssh -i .\ssh_key Sahilhasnain@98.70.32.91 "mkdir -p /home/Sahilhasnain/android-secrets/your-project && chmod 700 /home/Sahilhasnain/android-secrets/your-project"
+scp -i .\ssh_key ".\your-release-key.jks" Sahilhasnain@98.70.32.91:/home/Sahilhasnain/android-secrets/your-project/release.keystore
 ```
 
 If you are not in the repo root, use the absolute local path instead of `.\your-release-key.jks`.

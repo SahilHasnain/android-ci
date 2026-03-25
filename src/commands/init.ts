@@ -14,6 +14,8 @@ export async function runInitCommand(argv: string[]): Promise<void> {
   const args = parseArgs(argv);
   const target = path.resolve(args.target ?? process.cwd());
   const config = await detectRepoConfig(target);
+  const projectSlug = path.basename(target);
+  const defaultKeystorePath = `/home/Sahilhasnain/android-secrets/${projectSlug}/release.keystore`;
   const isInteractive = args["no-prompt"] !== "true";
   const androidProjectPath = args["android-project-path"]
     ?? (isInteractive
@@ -50,10 +52,10 @@ export async function runInitCommand(argv: string[]): Promise<void> {
   const keystorePath = args["keystore-path"]
     ?? (isInteractive
       ? await promptText("Keystore path on runner", {
-          defaultValue: "/home/runner/android-secrets/release.keystore",
+          defaultValue: defaultKeystorePath,
           required: true,
         })
-      : "/home/runner/android-secrets/release.keystore");
+      : defaultKeystorePath);
   const enablePlayDeploy = args["enable-play-deploy"]
     ? args["enable-play-deploy"] !== "false"
     : isInteractive

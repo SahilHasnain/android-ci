@@ -60,8 +60,8 @@ ${options.enablePlayDeploy ? "- \\`PLAY_STORE_JSON_KEY_PATH\\`\n" : ""}${options
 3. If your keystore \`.jks\` is in this repo root, copy it to the VM:
 
 \`\`\`powershell
-ssh -i .\\ssh_key Sahilhasnain@98.70.32.91 "mkdir -p /home/Sahilhasnain/android-secrets && chmod 700 /home/Sahilhasnain/android-secrets"
-scp -i .\\ssh_key ".\\your-release-key.jks" Sahilhasnain@98.70.32.91:/home/Sahilhasnain/android-secrets/release.keystore
+ssh -i .\\ssh_key Sahilhasnain@98.70.32.91 "mkdir -p ${options.keystorePath.replace(/\/release\.keystore$/, "")} && chmod 700 ${options.keystorePath.replace(/\/release\.keystore$/, "")}"
+scp -i .\\ssh_key ".\\your-release-key.jks" Sahilhasnain@98.70.32.91:${options.keystorePath}
 \`\`\`
 
 4. Review \`.github/workflows/android-self-hosted.yml\`.

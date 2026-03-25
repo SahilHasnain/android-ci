@@ -61,7 +61,7 @@ The generated workflow expects a self-hosted Linux runner and typically uses:
 
 - runner label such as `android-do`
 - tracked Android project under `android/` or `apps/mobile/android`
-- a release keystore available on the shared VM filesystem
+- a project-specific release keystore available on the shared VM filesystem
 - optionally a shared Play service-account JSON available on the shared VM filesystem
 
 ## GitHub Secrets
@@ -85,6 +85,13 @@ Common optional overrides:
 - `SENTRY_PROJECT`
 
 If your app uses env-based configuration, define the needed repository variables and expose them in the workflow. This tool does not yet infer app-specific env keys automatically.
+
+Recommended VM file layout:
+
+- per-project keystore:
+  - `/home/Sahilhasnain/android-secrets/<project>/release.keystore`
+- shared Play key:
+  - `/home/Sahilhasnain/android-secrets/play-store-key.json`
 
 ## Dev
 
