@@ -25,7 +25,7 @@ export function workflowTemplate(options: WorkflowTemplateOptions): string {
 
   const deployStep = options.enablePlayDeploy
     ? `      - name: Fastlane deploy
-        if: \${{ github.event_name == 'workflow_dispatch' && env.APP_VARIANT == 'production' }}
+        if: \${{ env.APP_VARIANT == 'production' }}
         env:
           SENTRY_AUTH_TOKEN: \${{ secrets.SENTRY_AUTH_TOKEN }}
           SUPPLY_JSON_KEY: \${{ vars.PLAY_STORE_JSON_KEY_PATH || '${playJsonPath}' }}
@@ -42,6 +42,14 @@ export function workflowTemplate(options: WorkflowTemplateOptions): string {
           fastlane android deploy
 `
     : "";
+
+  const cleanupStep = `      - name: Cleanup build artifacts
+        if: always()
+        run: |
+          cd ${options.androidProjectPath}
+          ./gradlew clean
+          rm -rf ~/.gradle/caches/build-cache-*
+`;
 
   return `name: Android Self Hosted
 
@@ -114,6 +122,6 @@ ${options.enableSentry ? "          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_T
           path: |
             ${options.androidProjectPath}/app/build/outputs/**/*.aab
             ${options.androidProjectPath}/app/build/outputs/**/*.apk
-${deployStep}
+${deployStep}${cleanupStep}
 `;
 }
