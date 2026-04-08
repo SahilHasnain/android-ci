@@ -30,7 +30,7 @@ export function workflowTemplate(options: WorkflowTemplateOptions): string {
           SENTRY_AUTH_TOKEN: \${{ secrets.SENTRY_AUTH_TOKEN }}
           SUPPLY_JSON_KEY: \${{ vars.PLAY_STORE_JSON_KEY_PATH || '${playJsonPath}' }}
           ANDROID_APPLICATION_ID: \${{ vars.ANDROID_APPLICATION_ID || '${options.androidApplicationId}' }}
-          PLAY_TRACK: \${{ vars.PLAY_TRACK || 'internal' }}
+          PLAY_TRACK: \${{ vars.PLAY_TRACK || 'alpha' }}
           SKIP_ANDROID_BUILD: "true"
           ANDROID_KEYSTORE_PATH: \${{ vars.ANDROID_KEYSTORE_PATH || '${options.keystorePath}' }}
           ANDROID_KEYSTORE_PASSWORD: \${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
