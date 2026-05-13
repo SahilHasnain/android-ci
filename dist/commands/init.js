@@ -4,7 +4,7 @@ import { cyan, green, yellow } from "kleur/colors";
 import { ensureDirectory, parseArgs, writeFileSafe, } from "../lib/fs.js";
 import { promptBoolean, promptText } from "../lib/prompt.js";
 import { detectRepoConfig } from "../lib/repo.js";
-import { renderGitHubWorkflow, renderReadme, renderFastfile } from "../templates/android.js";
+import { renderGitHubWorkflow, renderReadme, renderFastfile, renderGemfile } from "../templates/android.js";
 export async function runInitCommand(argv) {
     const args = parseArgs(argv);
     const target = path.resolve(args.target ?? process.cwd());
@@ -117,6 +117,7 @@ export async function runInitCommand(argv) {
     if (enablePlayDeploy && config.androidProjectPath) {
         const fastlaneDir = path.join(target, androidProjectPath, "fastlane");
         const fastfilePath = path.join(fastlaneDir, "Fastfile");
+        const gemfilePath = path.join(target, androidProjectPath, "Gemfile");
         try {
             const fs = await import("node:fs/promises");
             await fs.access(fastfilePath);
@@ -130,6 +131,16 @@ export async function runInitCommand(argv) {
                 enableSentry,
             }));
             console.log(green("Generated Fastfile at android/fastlane/Fastfile"));
+        }
+        // Generate Gemfile if it doesn't exist
+        try {
+            const fs = await import("node:fs/promises");
+            await fs.access(gemfilePath);
+            console.log(yellow("Gemfile already exists, skipping generation."));
+        }
+        catch {
+            await writeFileSafe(gemfilePath, renderGemfile());
+            console.log(green("Generated Gemfile at android/Gemfile"));
         }
     }
     console.log(green("Scaffolded Android CI foundation."));
