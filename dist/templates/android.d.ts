@@ -1,0 +1,12 @@
+import { workflowTemplate } from "./workflow.template.js";
+interface ReadmeTemplateOptions {
+    androidProjectPath: string;
+    runnerLabel: string;
+    androidApplicationId: string;
+    keystorePath: string;
+    enablePlayDeploy: boolean;
+    enableSentry: boolean;
+}
+export declare function renderGitHubWorkflow(options: Parameters<typeof workflowTemplate>[0]): string;
+export declare function renderReadme(options: ReadmeTemplateOptions): string;
+export {};

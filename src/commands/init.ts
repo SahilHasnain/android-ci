@@ -17,6 +17,13 @@ export async function runInitCommand(argv: string[]): Promise<void> {
   const projectSlug = path.basename(target);
   const defaultKeystorePath = `/home/Sahilhasnain/android-secrets/${projectSlug}/release.keystore`;
   const isInteractive = args["no-prompt"] !== "true";
+  // Ask about GitHub-hosted first
+  const useGitHubHosted = args["use-github-hosted"]
+    ? args["use-github-hosted"] !== "false"
+    : isInteractive
+      ? await promptBoolean("Use GitHub-hosted runners (recommended)", true)
+      : true;
+
   const androidProjectPath = args["android-project-path"]
     ?? (isInteractive
       ? await promptText("Android project path", {
@@ -35,13 +42,18 @@ export async function runInitCommand(argv: string[]): Promise<void> {
           required: true,
         }) as "development" | "preview" | "production")
       : "production");
-  const runnerLabel = args["runner-label"]
-    ?? (isInteractive
-      ? await promptText("Runner label", {
-          defaultValue: "android-do",
-          required: true,
-        })
-      : "android-do");
+  
+  // Only ask for runner label and keystore path if using self-hosted
+  const runnerLabel = !useGitHubHosted
+    ? (args["runner-label"]
+      ?? (isInteractive
+        ? await promptText("Runner label", {
+            defaultValue: "android-do",
+            required: true,
+          })
+        : "android-do"))
+    : "android-do"; // Default value for template, won't be used
+  
   const androidApplicationId = args["android-application-id"]
     ?? (isInteractive
       ? await promptText("Android application id", {
@@ -49,13 +61,17 @@ export async function runInitCommand(argv: string[]): Promise<void> {
           required: true,
         })
       : "com.example.app");
-  const keystorePath = args["keystore-path"]
-    ?? (isInteractive
-      ? await promptText("Keystore path on runner", {
-          defaultValue: defaultKeystorePath,
-          required: true,
-        })
-      : defaultKeystorePath);
+  
+  const keystorePath = !useGitHubHosted
+    ? (args["keystore-path"]
+      ?? (isInteractive
+        ? await promptText("Keystore path on runner", {
+            defaultValue: defaultKeystorePath,
+            required: true,
+          })
+        : defaultKeystorePath))
+    : defaultKeystorePath; // Default value for template, won't be used
+  
   const enablePlayDeploy = args["enable-play-deploy"]
     ? args["enable-play-deploy"] !== "false"
     : isInteractive
@@ -65,12 +81,6 @@ export async function runInitCommand(argv: string[]): Promise<void> {
     ? args["enable-sentry"] !== "false"
     : isInteractive
       ? await promptBoolean("Enable Sentry", true)
-      : true;
-  
-  const useGitHubHosted = args["use-github-hosted"]
-    ? args["use-github-hosted"] !== "false"
-    : isInteractive
-      ? await promptBoolean("Use GitHub-hosted runners (recommended)", true)
       : true;
 
   console.log(cyan(`Target: ${target}`));
