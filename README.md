@@ -2,6 +2,8 @@
 
 Reusable CLI for setting up Android CI/CD in app repositories.
 
+**Now supports GitHub-hosted runners by default!** No more VM setup headaches.
+
 ## Commands
 
 - `android-ci init`
@@ -14,8 +16,37 @@ Reusable CLI for setting up Android CI/CD in app repositories.
 - `.github/workflows/android-self-hosted.yml`
 - `infra/android-ci/README.md`
 
-This tool is optimized for teams using one shared self-hosted Android VM across multiple repos.
-It generates the per-project integration layer, not full VM ownership per repo.
+## Runner Options
+
+### GitHub-Hosted Runners (Default & Recommended)
+
+- ✅ No setup required
+- ✅ Fast builds (10-15 minutes)
+- ✅ Always up-to-date
+- ✅ Automatic caching
+- ✅ Secrets stored as base64 in GitHub
+
+**Required GitHub Secrets:**
+- `ANDROID_KEYSTORE_BASE64` - Base64 encoded keystore file
+- `PLAY_STORE_JSON_BASE64` - Base64 encoded Play Store service account JSON
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+- `SENTRY_AUTH_TOKEN` (optional)
+
+**To encode your secrets:**
+```bash
+# Encode keystore
+base64 -w 0 path/to/release.keystore
+
+# Encode Play Store JSON
+base64 -w 0 path/to/play-store-key.json
+```
+
+### Self-Hosted Runners (Legacy)
+
+For teams using one shared self-hosted Android VM across multiple repos.
+Set `--use-github-hosted false` during init.
 
 For the base machine setup, use [SHARED_VM_SETUP.md](./SHARED_VM_SETUP.md).
 
@@ -32,15 +63,30 @@ It will ask for:
 
 - Android project path
 - default app variant
-- runner label
+- runner label (only for self-hosted)
 - Android application id
-- keystore path on runner
+- keystore path on runner (only for self-hosted)
 - whether Play deploy is enabled
 - whether Sentry is enabled
+- **whether to use GitHub-hosted runners (recommended)**
 
 ## Non-Interactive Usage
 
-If you want to script it, pass flags:
+### GitHub-Hosted (Recommended)
+
+```bash
+npm run dev -- init \
+  --target ../my-app \
+  --no-prompt true \
+  --android-project-path apps/mobile/android \
+  --app-variant production \
+  --android-application-id com.example.app \
+  --enable-play-deploy true \
+  --enable-sentry true \
+  --use-github-hosted true
+```
+
+### Self-Hosted (Legacy)
 
 ```bash
 npm run dev -- init \
@@ -52,7 +98,8 @@ npm run dev -- init \
   --android-application-id com.example.app \
   --keystore-path /home/runner/android-secrets/release.keystore \
   --enable-play-deploy true \
-  --enable-sentry true
+  --enable-sentry true \
+  --use-github-hosted false
 ```
 
 ## Generated Workflow Expectations

@@ -66,6 +66,12 @@ export async function runInitCommand(argv: string[]): Promise<void> {
     : isInteractive
       ? await promptBoolean("Enable Sentry", true)
       : true;
+  
+  const useGitHubHosted = args["use-github-hosted"]
+    ? args["use-github-hosted"] !== "false"
+    : isInteractive
+      ? await promptBoolean("Use GitHub-hosted runners (recommended)", true)
+      : true;
 
   console.log(cyan(`Target: ${target}`));
 
@@ -90,6 +96,7 @@ export async function runInitCommand(argv: string[]): Promise<void> {
       keystorePath,
       enablePlayDeploy,
       enableSentry,
+      useGitHubHosted,
     }),
   );
 
