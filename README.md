@@ -35,12 +35,34 @@ Reusable CLI for setting up Android CI/CD in app repositories.
 - `SENTRY_AUTH_TOKEN` (optional)
 
 **To encode your secrets:**
+
+Use the provided helper scripts:
+
+**Linux/macOS:**
 ```bash
-# Encode keystore
+# Encode both keystore and Play Store JSON
+./scripts/encode-secrets.sh path/to/release.keystore path/to/play-store-key.json
+
+# Or just keystore
+./scripts/encode-secrets.sh path/to/release.keystore
+```
+
+**Windows (PowerShell):**
+```powershell
+# Encode both keystore and Play Store JSON
+.\scripts\encode-secrets.ps1 path\to\release.keystore path\to\play-store-key.json
+
+# Or just keystore
+.\scripts\encode-secrets.ps1 path\to\release.keystore
+```
+
+**Manual encoding (if needed):**
+```bash
+# Linux/macOS
 base64 -w 0 path/to/release.keystore
 
-# Encode Play Store JSON
-base64 -w 0 path/to/play-store-key.json
+# Windows PowerShell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("path\to\release.keystore"))
 ```
 
 ### Self-Hosted Runners (Legacy)
@@ -139,6 +161,28 @@ Recommended VM file layout:
   - `/home/Sahilhasnain/android-secrets/<project>/release.keystore`
 - shared Play key:
   - `/home/Sahilhasnain/android-secrets/play-store-key.json`
+
+## Helper Scripts
+
+### Encode Secrets
+
+Located in `scripts/` directory:
+
+- `encode-secrets.sh` - Bash script for Linux/macOS
+- `encode-secrets.ps1` - PowerShell script for Windows
+
+These scripts help you encode your Android keystore and Play Store JSON files to base64 format required by GitHub Actions.
+
+**Usage:**
+```bash
+# Linux/macOS
+./scripts/encode-secrets.sh release.keystore play-store-key.json
+
+# Windows
+.\scripts\encode-secrets.ps1 release.keystore play-store-key.json
+```
+
+The scripts will output the base64-encoded values that you can copy directly to your GitHub repository secrets.
 
 ## Dev
 
