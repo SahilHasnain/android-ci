@@ -8,7 +8,7 @@ import {
 } from "../lib/fs.js";
 import { promptBoolean, promptText } from "../lib/prompt.js";
 import { detectRepoConfig } from "../lib/repo.js";
-import { renderGitHubWorkflow, renderReadme } from "../templates/android.js";
+import { renderGitHubWorkflow, renderReadme, renderFastfile } from "../templates/android.js";
 
 export async function runInitCommand(argv: string[]): Promise<void> {
   const args = parseArgs(argv);
@@ -155,6 +155,29 @@ export async function runInitCommand(argv: string[]): Promise<void> {
       console.log(green("Copied encoding helper scripts to infra/android-ci/scripts/"));
     } catch (err) {
       console.log(yellow("Warning: Could not copy encoding scripts. You can find them in the android-ci repository."));
+    }
+  }
+
+  // Generate Fastfile if Play deploy is enabled
+  if (enablePlayDeploy && config.androidProjectPath) {
+    const fastlaneDir = path.join(target, androidProjectPath, "fastlane");
+    const fastfilePath = path.join(fastlaneDir, "Fastfile");
+    
+    try {
+      const fs = await import("node:fs/promises");
+      await fs.access(fastfilePath);
+      console.log(yellow("Fastfile already exists, skipping generation. Review it to ensure it matches the workflow expectations."));
+    } catch {
+      // Fastfile doesn't exist, create it
+      await ensureDirectory(fastlaneDir);
+      await writeFileSafe(
+        fastfilePath,
+        renderFastfile({
+          androidApplicationId,
+          enableSentry,
+        }),
+      );
+      console.log(green("Generated Fastfile at android/fastlane/Fastfile"));
     }
   }
 

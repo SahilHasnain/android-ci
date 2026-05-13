@@ -1,4 +1,5 @@
 import { workflowTemplate } from "./workflow.template.js";
+import { fastfileTemplate } from "./fastfile.template.js";
 
 interface ReadmeTemplateOptions {
   androidProjectPath: string;
@@ -12,6 +13,10 @@ interface ReadmeTemplateOptions {
 
 export function renderGitHubWorkflow(options: Parameters<typeof workflowTemplate>[0]): string {
   return workflowTemplate(options);
+}
+
+export function renderFastfile(options: Parameters<typeof fastfileTemplate>[0]): string {
+  return fastfileTemplate(options);
 }
 
 export function renderReadme(options: ReadmeTemplateOptions): string {

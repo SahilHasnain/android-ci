@@ -1,6 +1,10 @@
 import { workflowTemplate } from "./workflow.template.js";
+import { fastfileTemplate } from "./fastfile.template.js";
 export function renderGitHubWorkflow(options) {
     return workflowTemplate(options);
+}
+export function renderFastfile(options) {
+    return fastfileTemplate(options);
 }
 export function renderReadme(options) {
     const useGitHubHosted = options.useGitHubHosted ?? true;
