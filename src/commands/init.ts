@@ -119,8 +119,44 @@ export async function runInitCommand(argv: string[]): Promise<void> {
       keystorePath,
       enablePlayDeploy,
       enableSentry,
+      useGitHubHosted,
     }),
   );
+
+  // Copy encoding scripts if using GitHub-hosted
+  if (useGitHubHosted) {
+    const scriptsDir = path.join(config.infraDir, "scripts");
+    await ensureDirectory(scriptsDir);
+    
+    // Copy bash script
+    const bashScriptSource = path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      "..",
+      "..",
+      "scripts",
+      "encode-secrets.sh"
+    );
+    const bashScriptDest = path.join(scriptsDir, "encode-secrets.sh");
+    
+    // Copy PowerShell script
+    const ps1ScriptSource = path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      "..",
+      "..",
+      "scripts",
+      "encode-secrets.ps1"
+    );
+    const ps1ScriptDest = path.join(scriptsDir, "encode-secrets.ps1");
+    
+    try {
+      const fs = await import("node:fs/promises");
+      await fs.copyFile(bashScriptSource, bashScriptDest);
+      await fs.copyFile(ps1ScriptSource, ps1ScriptDest);
+      console.log(green("Copied encoding helper scripts to infra/android-ci/scripts/"));
+    } catch (err) {
+      console.log(yellow("Warning: Could not copy encoding scripts. You can find them in the android-ci repository."));
+    }
+  }
 
   console.log(green("Scaffolded Android CI foundation."));
   console.log(

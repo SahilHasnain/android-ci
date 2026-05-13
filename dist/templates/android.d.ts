@@ -6,6 +6,7 @@ interface ReadmeTemplateOptions {
     keystorePath: string;
     enablePlayDeploy: boolean;
     enableSentry: boolean;
+    useGitHubHosted?: boolean;
 }
 export declare function renderGitHubWorkflow(options: Parameters<typeof workflowTemplate>[0]): string;
 export declare function renderReadme(options: ReadmeTemplateOptions): string;
