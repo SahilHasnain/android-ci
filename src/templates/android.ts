@@ -54,6 +54,44 @@ Add these secrets to your repository at:
 - \`ANDROID_KEY_PASSWORD\` - Key password
 ${options.enableSentry ? "- \\`SENTRY_AUTH_TOKEN\\` - Sentry authentication token\n" : ""}
 
+## Android Build Configuration
+
+**IMPORTANT:** Ensure your \`android/app/build.gradle\` is configured to use the release keystore from environment variables.
+
+Add this to your \`signingConfigs\` section:
+
+\`\`\`groovy
+signingConfigs {
+    debug {
+        storeFile file('debug.keystore')
+        storePassword 'android'
+        keyAlias 'androiddebugkey'
+        keyPassword 'android'
+    }
+    release {
+        if (System.getenv("ANDROID_KEYSTORE_PATH")) {
+            storeFile file(System.getenv("ANDROID_KEYSTORE_PATH"))
+            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            keyAlias System.getenv("ANDROID_KEY_ALIAS")
+            keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+        }
+    }
+}
+buildTypes {
+    debug {
+        signingConfig signingConfigs.debug
+    }
+    release {
+        // Use release signing config if available, otherwise fall back to debug
+        signingConfig System.getenv("ANDROID_KEYSTORE_PATH") ? signingConfigs.release : signingConfigs.debug
+        minifyEnabled enableMinifyInReleaseBuilds
+        proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+    }
+}
+\`\`\`
+
+**Why this matters:** Without this configuration, your release builds will use the debug keystore, causing Play Store upload failures with "wrong key" errors.
+
 ## Encoding Your Secrets
 
 Use the provided helper scripts in \`scripts/\` directory:
