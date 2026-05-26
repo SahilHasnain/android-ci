@@ -84,6 +84,7 @@ npm run dev -- init --target ../my-app
 It will ask for:
 
 - Android project path
+- workflow trigger file path
 - default app variant
 - runner label (only for self-hosted)
 - Android application id
@@ -101,6 +102,7 @@ npm run dev -- init \
   --target ../my-app \
   --no-prompt true \
   --android-project-path apps/mobile/android \
+  --workflow-config-trigger-path apps/mobile/app.config.js \
   --app-variant production \
   --android-application-id com.example.app \
   --enable-play-deploy true \
@@ -115,6 +117,7 @@ npm run dev -- init \
   --target ../my-app \
   --no-prompt true \
   --android-project-path apps/mobile/android \
+  --workflow-config-trigger-path apps/mobile/app.config.js \
   --app-variant production \
   --runner-label android-do \
   --android-application-id com.example.app \
