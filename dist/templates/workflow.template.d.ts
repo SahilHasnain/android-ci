@@ -1,5 +1,6 @@
 interface WorkflowTemplateOptions {
     androidProjectPath: string;
+    workflowConfigTriggerPath: string;
     appVariant: "development" | "preview" | "production";
     runnerLabel: string;
     androidApplicationId: string;

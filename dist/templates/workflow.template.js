@@ -106,6 +106,11 @@ on:
           - development
           - preview
           - production
+  push:
+    branches:
+      - main
+    paths:
+      - ${options.workflowConfigTriggerPath}
 
 jobs:
   build-android:

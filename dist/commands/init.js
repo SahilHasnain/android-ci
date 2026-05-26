@@ -25,6 +25,13 @@ export async function runInitCommand(argv) {
                 required: true,
             })
             : config.androidProjectPath ?? "android");
+    const workflowConfigTriggerPath = args["workflow-config-trigger-path"]
+        ?? (isInteractive
+            ? await promptText("Workflow trigger file path", {
+                defaultValue: "app.config.js",
+                required: true,
+            })
+            : "app.config.js");
     const appVariant = args["app-variant"]
         ?? (isInteractive
             ? await promptText("Default app variant", {
@@ -76,6 +83,7 @@ export async function runInitCommand(argv) {
     await ensureDirectory(config.infraDir);
     await writeFileSafe(path.join(config.workflowDir, "android-self-hosted.yml"), renderGitHubWorkflow({
         androidProjectPath,
+        workflowConfigTriggerPath,
         appVariant,
         runnerLabel,
         androidApplicationId,
