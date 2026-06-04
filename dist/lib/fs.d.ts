@@ -3,3 +3,5 @@ export declare function fileExists(filePath: string): Promise<boolean>;
 export declare function writeFileSafe(filePath: string, content: string): Promise<void>;
 export declare function readJsonFile<T>(filePath: string): Promise<T>;
 export declare function parseArgs(argv: string[]): Record<string, string>;
+export declare function readFile(filePath: string): Promise<string>;
+export declare function patchBuildGradle(buildGradlePath: string): Promise<boolean>;

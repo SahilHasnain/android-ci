@@ -41,9 +41,9 @@ ${options.enableSentry ? "- \\`SENTRY_AUTH_TOKEN\\` - Sentry authentication toke
 
 ## Android Build Configuration
 
-**IMPORTANT:** Ensure your \`android/app/build.gradle\` is configured to use the release keystore from environment variables.
+**IMPORTANT:** Your \`android/app/build.gradle\` has been automatically configured to use the release keystore from environment variables during initialization.
 
-Add this to your \`signingConfigs\` section:
+The configuration includes:
 
 \`\`\`groovy
 signingConfigs {

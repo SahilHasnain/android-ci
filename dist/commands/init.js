@@ -1,7 +1,7 @@
 import path from "node:path";
 import process from "node:process";
 import { cyan, green, yellow } from "kleur/colors";
-import { ensureDirectory, parseArgs, writeFileSafe, } from "../lib/fs.js";
+import { ensureDirectory, parseArgs, writeFileSafe, patchBuildGradle, fileExists, } from "../lib/fs.js";
 import { promptBoolean, promptText } from "../lib/prompt.js";
 import { detectRepoConfig } from "../lib/repo.js";
 import { renderGitHubWorkflow, renderReadme, renderFastfile, renderGemfile } from "../templates/android.js";
@@ -119,6 +119,28 @@ export async function runInitCommand(argv) {
         }
         catch (err) {
             console.log(yellow("Warning: Could not copy encoding scripts. You can find them in the android-ci repository."));
+        }
+    }
+    // Patch build.gradle to use release keystore
+    if (config.androidProjectPath) {
+        const buildGradlePath = path.join(target, androidProjectPath, "app", "build.gradle");
+        if (await fileExists(buildGradlePath)) {
+            try {
+                const wasPatched = await patchBuildGradle(buildGradlePath);
+                if (wasPatched) {
+                    console.log(green(`Updated ${androidProjectPath}/app/build.gradle to use release keystore`));
+                }
+                else {
+                    console.log(cyan(`${androidProjectPath}/app/build.gradle already configured for release keystore`));
+                }
+            }
+            catch (error) {
+                console.log(yellow(`Warning: Could not automatically patch build.gradle: ${error instanceof Error ? error.message : String(error)}`));
+                console.log(yellow("You'll need to manually configure the release signing config. See the README for instructions."));
+            }
+        }
+        else {
+            console.log(yellow(`build.gradle not found at ${buildGradlePath}`));
         }
     }
     // Generate Fastfile if Play deploy is enabled
