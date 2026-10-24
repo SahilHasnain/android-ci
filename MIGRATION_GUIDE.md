@@ -1,168 +1,29 @@
-# Migration Guide: Self-Hosted to GitHub-Hosted Runners
+# Expo Android CI migration
 
-This guide helps you migrate from self-hosted runners to GitHub-hosted runners.
+The scaffold now assumes Expo prebuild and GitHub-hosted runners.
 
-## Why Migrate?
+## Project layout
 
-**Self-Hosted Issues:**
-- VM setup complexity
-- Resource management (RAM, CPU)
-- Maintenance overhead
-- Freezing/crashing on resource-constrained VMs
+- Keep generated `android/` ignored and out of source control.
+- Run `npx expo prebuild --platform android --no-install` in the workflow.
+- Keep `Gemfile` and `fastlane/Fastfile` at the application repository root.
+- Use `scripts/patch-android-release-signing.mjs` after prebuild for release signing and CI version codes.
 
-**GitHub-Hosted Benefits:**
-- ✅ Zero setup
-- ✅ Fast, reliable builds
-- ✅ No VM maintenance
-- ✅ Automatic scaling
-- ✅ Built-in caching
+## Build choices
 
-## Migration Steps
+The generated workflow has two manual options:
 
-### 1. Encode Your Secrets
+- `debug-apk`: build and upload an installable APK.
+- `production`: sign an AAB, upload it as a workflow artifact, and (if enabled) deploy it to Google Play.
 
-```bash
-# Encode your Android keystore
-base64 -w 0 /path/to/release.keystore > keystore-base64.txt
+Pushes to `main` and pull requests build only the debug APK. Production is a manual workflow dispatch.
 
-# Encode your Play Store service account JSON
-base64 -w 0 /path/to/play-store-key.json > playstore-base64.txt
-```
+## Secrets
 
-### 2. Add GitHub Secrets
+Production requires `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`. Play deployment additionally requires `PLAY_STORE_JSON_BASE64`. If app.json configures `android.googleServicesFile`, provide the matching `GOOGLE_SERVICES_JSON_BASE64` secret.
 
-Go to your repository: `Settings → Secrets and variables → Actions`
+Do not commit keystores, Google service-account keys, or the locally generated Android project.
 
-Add these secrets:
+## Upgrade existing repositories
 
-| Secret Name | Value |
-|-------------|-------|
-| `ANDROID_KEYSTORE_BASE64` | Contents of `keystore-base64.txt` |
-| `PLAY_STORE_JSON_BASE64` | Contents of `playstore-base64.txt` |
-| `ANDROID_KEYSTORE_PASSWORD` | Your keystore password |
-| `ANDROID_KEY_ALIAS` | Your key alias |
-| `ANDROID_KEY_PASSWORD` | Your key password |
-| `SENTRY_AUTH_TOKEN` | Your Sentry token (if using Sentry) |
-
-### 3. Regenerate Workflow
-
-```bash
-# In your android-ci repo
-npm install
-npm run dev -- init --target ../your-app --use-github-hosted true
-```
-
-Or manually update your workflow:
-
-**Change:**
-```yaml
-runs-on: [self-hosted, linux, x64, android-do]
-env:
-  ANDROID_SDK_ROOT: /opt/android-sdk
-  JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-```
-
-**To:**
-```yaml
-runs-on: ubuntu-latest
-env:
-  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-  JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
-```
-
-**Add decode steps before build:**
-```yaml
-- name: Decode keystore
-  run: |
-    echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/release.keystore
-
-- name: Decode Play Store JSON
-  if: ${{ env.APP_VARIANT == 'production' }}
-  run: |
-    echo "${{ secrets.PLAY_STORE_JSON_BASE64 }}" | base64 -d > /tmp/play-store-key.json
-```
-
-**Update keystore paths:**
-```yaml
-env:
-  ANDROID_KEYSTORE_PATH: /tmp/release.keystore  # was /home/runner/android-secrets/...
-  SUPPLY_JSON_KEY: /tmp/play-store-key.json     # was /home/Sahilhasnain/android-secrets/...
-```
-
-### 4. Add Caching (Optional but Recommended)
-
-```yaml
-- name: Setup Gradle cache
-  uses: actions/cache@v4
-  with:
-    path: |
-      ~/.gradle/caches
-      ~/.gradle/wrapper
-      ~/.android/build-cache
-    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-    restore-keys: |
-      ${{ runner.os }}-gradle-
-
-- name: Cache NDK
-  uses: actions/cache@v4
-  with:
-    path: |
-      apps/mobile/android/app/.cxx
-      apps/mobile/android/.gradle
-    key: ${{ runner.os }}-ndk-${{ hashFiles('apps/mobile/android/**/*.gradle*') }}
-    restore-keys: |
-      ${{ runner.os }}-ndk-
-```
-
-### 5. Test the Workflow
-
-1. Commit and push changes
-2. Go to Actions tab
-3. Run the workflow manually
-4. First build: ~15-20 minutes (building cache)
-5. Subsequent builds: ~5-10 minutes (using cache)
-
-### 6. Decommission Self-Hosted Runner (Optional)
-
-Once GitHub-hosted builds are working:
-
-1. Go to repository Settings → Actions → Runners
-2. Remove the self-hosted runner
-3. Shut down your VM
-
-## Troubleshooting
-
-### Build fails with "keystore not found"
-
-- Verify `ANDROID_KEYSTORE_BASE64` secret is set correctly
-- Check the base64 encoding has no newlines: `base64 -w 0`
-
-### Build fails with "Play Store JSON invalid"
-
-- Verify `PLAY_STORE_JSON_BASE64` secret is set correctly
-- Test decoding locally: `echo "YOUR_BASE64" | base64 -d | jq .`
-
-### Builds are slow
-
-- First build is always slow (building cache)
-- Ensure caching steps are added
-- Check if building for multiple architectures (use only `arm64-v8a` for faster builds)
-
-## Cost Comparison
-
-| Runner Type | Setup Time | Build Time | Monthly Cost* |
-|-------------|------------|------------|---------------|
-| Self-Hosted VM | 2-4 hours | 20-60 min | $12-50 (VM) |
-| GitHub-Hosted | 0 minutes | 10-15 min | $0-8 (usage) |
-
-*Assuming 20 builds/month. GitHub-hosted is free for public repos.
-
-## Rollback
-
-If you need to rollback to self-hosted:
-
-```bash
-npm run dev -- init --target ../your-app --use-github-hosted false
-```
-
-Then restore your VM and runner configuration.
+Run `android-ci init` with the app repository as `--target`. Back up or rename an existing `.github/workflows/android-ci.yml` first; init writes the generated workflow at that path. Existing root Fastlane files and Gemfile are left unchanged when already present.

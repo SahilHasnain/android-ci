@@ -15,7 +15,7 @@ export async function runDoctorCommand(argv) {
             ok: await fileExists(path.join(target, "package.json")),
         },
         {
-            label: "android project",
+            label: "Expo app config (android/ is generated in CI)",
             ok: config.androidProjectPath !== null,
         },
         {
@@ -31,6 +31,6 @@ export async function runDoctorCommand(argv) {
         console.log(yellow(`Repo package name: ${pkg.name ?? "unknown"}`));
     }
     if (!config.androidProjectPath) {
-        console.log(yellow("No supported Android project detected. Expected android/ or apps/mobile/android."));
+        console.log(yellow("No Expo app.json or native Android project detected."));
     }
 }

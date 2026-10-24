@@ -18,7 +18,7 @@ export async function runDoctorCommand(argv: string[]): Promise<void> {
       ok: await fileExists(path.join(target, "package.json")),
     },
     {
-      label: "android project",
+      label: "Expo app config (android/ is generated in CI)",
       ok: config.androidProjectPath !== null,
     },
     {
@@ -38,7 +38,7 @@ export async function runDoctorCommand(argv: string[]): Promise<void> {
 
   if (!config.androidProjectPath) {
     console.log(
-      yellow("No supported Android project detected. Expected android/ or apps/mobile/android."),
+      yellow("No Expo app.json or native Android project detected."),
     );
   }
 }

@@ -35,8 +35,8 @@ ${sentryCall}    ensure_play_store_key
     end
     
     upload_to_play_store(
-      track: options[:track] || ENV["PLAY_TRACK"] || "internal",
-      aab: options[:aab] || "app/build/outputs/bundle/release/app-release.aab",
+      track: options[:track] || ENV["PLAY_TRACK"] || "production",
+      aab: options[:aab] || ENV["AAB_PATH"] || "android/app/build/outputs/bundle/release/app-release.aab",
       package_name: ENV["ANDROID_APPLICATION_ID"] || "${options.androidApplicationId}",
       json_key: ENV["SUPPLY_JSON_KEY"] || "/tmp/play-store-key.json",
       skip_upload_apk: true,

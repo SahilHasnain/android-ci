@@ -11,9 +11,11 @@ export interface RepoConfig {
 export async function detectRepoConfig(targetRoot: string): Promise<RepoConfig> {
   const androidRoot = path.join(targetRoot, "android");
   const mobileAndroidRoot = path.join(targetRoot, "apps", "mobile", "android");
+  const expoAppConfig = path.join(targetRoot, "app.json");
 
   const hasAndroidRoot = await fileExists(androidRoot);
   const hasMobileAndroidRoot = await fileExists(mobileAndroidRoot);
+  const hasExpoAppConfig = await fileExists(expoAppConfig);
 
   return {
     targetRoot,
@@ -21,7 +23,9 @@ export async function detectRepoConfig(targetRoot: string): Promise<RepoConfig> 
       ? "apps/mobile/android"
       : hasAndroidRoot
         ? "android"
-        : null,
+        : hasExpoAppConfig
+          ? "android"
+          : null,
     workflowDir: path.join(targetRoot, ".github", "workflows"),
     infraDir: path.join(targetRoot, "infra", "android-ci"),
   };

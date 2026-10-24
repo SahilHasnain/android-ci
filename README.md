@@ -1,196 +1,55 @@
 # android-ci
 
-Reusable CLI for setting up Android CI/CD in app repositories.
+Scaffold an Expo Android GitHub Actions workflow with two manual build choices: a debug APK or a signed production release.
 
-**Now supports GitHub-hosted runners by default!** No more VM setup headaches.
+## Run from an app repository
 
-## Commands
-
-- `android-ci init`
-- `android-ci doctor`
-- `android-ci migrate` planned
-- `android-ci upgrade` planned
-
-## What `init` Generates
-
-- `.github/workflows/android-self-hosted.yml`
-- `infra/android-ci/README.md`
-
-## Runner Options
-
-### GitHub-Hosted Runners (Default & Recommended)
-
-- ✅ No setup required
-- ✅ Fast builds (10-15 minutes)
-- ✅ Always up-to-date
-- ✅ Automatic caching
-- ✅ Secrets stored as base64 in GitHub
-
-**Required GitHub Secrets:**
-- `ANDROID_KEYSTORE_BASE64` - Base64 encoded keystore file
-- `PLAY_STORE_JSON_BASE64` - Base64 encoded Play Store service account JSON
-- `ANDROID_KEYSTORE_PASSWORD`
-- `ANDROID_KEY_ALIAS`
-- `ANDROID_KEY_PASSWORD`
-- `SENTRY_AUTH_TOKEN` (optional)
-
-**To encode your secrets:**
-
-Use the provided helper scripts:
-
-**Linux/macOS:**
 ```bash
-# Encode both keystore and Play Store JSON
-./scripts/encode-secrets.sh path/to/release.keystore path/to/play-store-key.json
-
-# Or just keystore
-./scripts/encode-secrets.sh path/to/release.keystore
+npx --yes --package=github:SahilHasnain/android-ci android-ci init --target .
 ```
 
-**Windows (PowerShell):**
-```powershell
-# Encode both keystore and Play Store JSON
-.\scripts\encode-secrets.ps1 path\to\release.keystore path\to\play-store-key.json
-
-# Or just keystore
-.\scripts\encode-secrets.ps1 path\to\release.keystore
-```
-
-**Manual encoding (if needed):**
-```bash
-# Linux/macOS
-base64 -w 0 path/to/release.keystore
-
-# Windows PowerShell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("path\to\release.keystore"))
-```
-
-### Self-Hosted Runners (Legacy)
-
-For teams using one shared self-hosted Android VM across multiple repos.
-Set `--use-github-hosted false` during init.
-
-For the base machine setup, use [SHARED_VM_SETUP.md](./SHARED_VM_SETUP.md).
-
-## Interactive Usage
-
-Run `init` without flags and it will prompt for missing values:
+Or from a local clone of this repo:
 
 ```bash
 npm install
-npm run dev -- init --target ../my-app
+npm run dev -- init --target ../your-app
 ```
 
-It will ask for:
+`init` generates `.github/workflows/android-ci.yml`, the release-signing helper, and (when Play deployment is enabled) a root `Gemfile` and `fastlane/Fastfile`.
 
-- Android project path
-- workflow trigger file path
-- default app variant
-- runner label (only for self-hosted)
-- Android application id
-- keystore path on runner (only for self-hosted)
-- whether Play deploy is enabled
-- whether Sentry is enabled
-- **whether to use GitHub-hosted runners (recommended)**
+## Android directory and Fastlane
 
-## Non-Interactive Usage
+The workflow runs Expo prebuild on the GitHub runner. The generated `android/` directory is temporary and should remain ignored by Git. Fastlane files stay at the application repository root so they persist across prebuilds.
 
-### GitHub-Hosted (Recommended)
+## Workflow choices
 
-```bash
-npm run dev -- init \
-  --target ../my-app \
-  --no-prompt true \
-  --android-project-path apps/mobile/android \
-  --workflow-config-trigger-path apps/mobile/app.config.js \
-  --app-variant production \
-  --android-application-id com.example.app \
-  --enable-play-deploy true \
-  --enable-sentry true \
-  --use-github-hosted true
-```
+- **debug-apk** builds an installable debug APK and uploads it as an Actions artifact.
+- **production** creates a signed AAB, uploads the artifact, and optionally deploys it to Google Play.
+- Pushes to `main` and pull requests use the debug APK path. Production is only started manually from Actions.
 
-### Self-Hosted (Legacy)
+## GitHub Actions secrets
 
-```bash
-npm run dev -- init \
-  --target ../my-app \
-  --no-prompt true \
-  --android-project-path apps/mobile/android \
-  --workflow-config-trigger-path apps/mobile/app.config.js \
-  --app-variant production \
-  --runner-label android-do \
-  --android-application-id com.example.app \
-  --keystore-path /home/runner/android-secrets/release.keystore \
-  --enable-play-deploy true \
-  --enable-sentry true \
-  --use-github-hosted false
-```
+Production signing requires:
 
-## Generated Workflow Expectations
-
-The generated workflow expects a self-hosted Linux runner and typically uses:
-
-- runner label such as `android-do`
-- tracked Android project under `android/` or `apps/mobile/android`
-- a project-specific release keystore available on the shared VM filesystem
-- optionally a shared Play service-account JSON available on the shared VM filesystem
-
-## GitHub Secrets
-
-Typical required secrets:
-
+- `ANDROID_KEYSTORE_BASE64`
 - `ANDROID_KEYSTORE_PASSWORD`
 - `ANDROID_KEY_ALIAS`
 - `ANDROID_KEY_PASSWORD`
-- `SENTRY_AUTH_TOKEN`
+- `PLAY_STORE_JSON_BASE64` when Play deployment is enabled
 
-## GitHub Variables
+If the app's `app.json` specifies `android.googleServicesFile`, also add `GOOGLE_SERVICES_JSON_BASE64` containing that file encoded as one Base64 line.
 
-Common optional overrides:
+Create these under **Repository Settings → Secrets and variables → Actions**. Never commit keystores or service-account private keys.
 
-- `ANDROID_APPLICATION_ID`
-- `ANDROID_KEYSTORE_PATH`
-- `PLAY_STORE_JSON_KEY_PATH`
-- `PLAY_TRACK`
-- `SENTRY_ORG`
-- `SENTRY_PROJECT`
+`PLAY_TRACK` is an optional repository variable; it defaults to `production`.
 
-If your app uses env-based configuration, define the needed repository variables and expose them in the workflow. This tool does not yet infer app-specific env keys automatically.
+## Publishing this CLI
 
-Recommended VM file layout:
-
-- per-project keystore:
-  - `/home/Sahilhasnain/android-secrets/<project>/release.keystore`
-- shared Play key:
-  - `/home/Sahilhasnain/android-secrets/play-store-key.json`
-
-## Helper Scripts
-
-### Encode Secrets
-
-Located in `scripts/` directory:
-
-- `encode-secrets.sh` - Bash script for Linux/macOS
-- `encode-secrets.ps1` - PowerShell script for Windows
-
-These scripts help you encode your Android keystore and Play Store JSON files to base64 format required by GitHub Actions.
-
-**Usage:**
-```bash
-# Linux/macOS
-./scripts/encode-secrets.sh release.keystore play-store-key.json
-
-# Windows
-.\scripts\encode-secrets.ps1 release.keystore play-store-key.json
-```
-
-The scripts will output the base64-encoded values that you can copy directly to your GitHub repository secrets.
-
-## Dev
+The package exposes the `android-ci` executable from `dist/cli.js`. After changing TypeScript sources, run:
 
 ```bash
-npm install
 npm run check
-npm run dev -- init --target ../my-app
+npm run build
 ```
+
+Commit both source and generated `dist/` files so the GitHub package can execute the updated CLI.
