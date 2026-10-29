@@ -39,17 +39,70 @@ on:
           - debug-apk
           - preview
           - production
+      increment_version_code:
+        description: Increment Android versionCode before building
+        required: true
+        default: false
+        type: boolean
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-ci-\${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  increment-versions:
+    name: Increment Android versionCode
+    if: \${{ github.event_name == 'workflow_dispatch' && inputs.increment_version_code == true }}
+    runs-on: ubuntu-latest
+    outputs:
+      commit_sha: \${{ steps.commit.outputs.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Increment versionCode and commit
+        id: commit
+        run: |
+          if [[ "$GITHUB_REF" != refs/heads/* ]]; then
+            echo "VersionCode increments can only be committed from a branch, not $GITHUB_REF"
+            exit 1
+          fi
+          node << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const gradleFile = path.join('${options.androidProjectPath}', 'app', 'build.gradle');
+          if (!fs.existsSync(gradleFile)) {
+            console.log('No app/build.gradle found, skipping versionCode increment');
+            process.exit(0);
+          }
+          let content = fs.readFileSync(gradleFile, 'utf8');
+          const pattern = /(versionCode\s+)(\d+)/;
+          const match = content.match(pattern);
+          if (!match) {
+            console.log('No versionCode found in build.gradle, skipping');
+            process.exit(0);
+          }
+          const current = parseInt(match[2], 10);
+          const next = current + 1;
+          content = content.replace(pattern, '$1' + next);
+          fs.writeFileSync(gradleFile, content);
+          console.log('Incremented versionCode: ' + current + ' -> ' + next);
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ${options.androidProjectPath}/app/build.gradle
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: increment Android versionCode [skip ci]"
+          git push origin "HEAD:$GITHUB_REF"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
   build-android:
     name: Android \${{ inputs.build_target || 'debug-apk' }}
+    needs: [increment-versions]
+    if: \${{ always() && (needs.increment-versions.result == 'success' || needs.increment-versions.result == 'skipped') }}
     runs-on: ubuntu-latest
     env:
       BUILD_TARGET: \${{ inputs.build_target || 'debug-apk' }}
@@ -58,6 +111,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: \${{ needs.increment-versions.outputs.commit_sha || github.sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
