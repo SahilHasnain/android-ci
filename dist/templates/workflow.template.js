@@ -187,7 +187,10 @@ ${playDecode}          keytool -list -keystore /tmp/release.keystore -storepass 
         run: |
           cd ${options.androidProjectPath}
           chmod +x ./gradlew
-          ./gradlew assembleRelease
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkey -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+          ./gradlew assembleRelease -Pandroid.injected.signing.store.file=$HOME/.android/debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.store.type=JKS -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android
 
       - name: Build production App Bundle
         if: \${{ env.BUILD_TARGET == 'production' }}
