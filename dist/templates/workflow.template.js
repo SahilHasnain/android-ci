@@ -31,12 +31,13 @@ on:
   workflow_dispatch:
     inputs:
       build_target:
-        description: Select a debug APK build or production Play Store release
+        description: Select a debug APK, preview APK, or production Play Store release
         required: true
         default: debug-apk
         type: choice
         options:
           - debug-apk
+          - preview
           - production
 
 permissions:
@@ -126,6 +127,13 @@ ${playDecode}          keytool -list -keystore /tmp/release.keystore -storepass 
           chmod +x ./gradlew
           ./gradlew assembleDebug
 
+      - name: Build preview APK
+        if: \${{ env.BUILD_TARGET == 'preview' }}
+        run: |
+          cd ${options.androidProjectPath}
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
+
       - name: Build production App Bundle
         if: \${{ env.BUILD_TARGET == 'production' }}
         env:
@@ -144,6 +152,15 @@ ${playDecode}          keytool -list -keystore /tmp/release.keystore -storepass 
         with:
           name: android-debug-apk-\${{ github.run_number }}
           path: ${options.androidProjectPath}/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload preview APK artifact
+        if: \${{ env.BUILD_TARGET == 'preview' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-preview-apk-\${{ github.run_number }}
+          path: ${options.androidProjectPath}/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
 
