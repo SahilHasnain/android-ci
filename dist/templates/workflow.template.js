@@ -7,7 +7,7 @@ export function workflowTemplate(options) {
           SUPPLY_JSON_KEY: /tmp/play-store-key.json
           ANDROID_APPLICATION_ID: ${options.androidApplicationId}
           PLAY_TRACK: \${{ vars.PLAY_TRACK || 'production' }}
-          AAB_PATH: ${options.androidProjectPath}/app/build/outputs/bundle/release/app-release.aab
+          AAB_PATH: \${{ env.AAB_PATH }}
         run: |
           bundle install --gemfile Gemfile
           bundle exec fastlane android deploy
@@ -181,6 +181,14 @@ ${playDecode}          keytool -list -keystore /tmp/release.keystore -storepass 
           cd ${options.androidProjectPath}
           chmod +x ./gradlew
           ./gradlew assembleDebug
+          artifact_path=$(find app/build/outputs/apk -type f -name '*development-debug.apk' -print -quit)
+          artifact_path=\${artifact_path:-$(find app/build/outputs/apk -type f -name '*-debug.apk' -print -quit)}
+          artifact_path=\${artifact_path:-$(find app/build/outputs/apk -type f -name 'app-debug.apk' -print -quit)}
+          if [ -z "$artifact_path" ]; then
+            echo "No debug APK was produced"
+            exit 1
+          fi
+          echo "ARTIFACT_PATH=${options.androidProjectPath}/$artifact_path" >> "$GITHUB_ENV"
 
       - name: Build preview APK
         if: \${{ env.BUILD_TARGET == 'preview' }}
@@ -193,6 +201,15 @@ ${playDecode}          keytool -list -keystore /tmp/release.keystore -storepass 
           fi
           ./gradlew assembleRelease -Pandroid.injected.signing.store.file=$HOME/.android/debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.store.type=JKS -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android
 
+          artifact_path=$(find app/build/outputs/apk -type f -name '*preview-release.apk' -print -quit)
+          artifact_path=\${artifact_path:-$(find app/build/outputs/apk -type f -name '*-release.apk' -print -quit)}
+          artifact_path=\${artifact_path:-$(find app/build/outputs/apk -type f -name 'app-release.apk' -print -quit)}
+          if [ -z "$artifact_path" ]; then
+            echo "No preview APK was produced"
+            exit 1
+          fi
+          echo "ARTIFACT_PATH=${options.androidProjectPath}/$artifact_path" >> "$GITHUB_ENV"
+
       - name: Build production App Bundle
         if: \${{ env.BUILD_TARGET == 'production' }}
         env:
@@ -204,13 +221,20 @@ ${playDecode}          keytool -list -keystore /tmp/release.keystore -storepass 
           cd ${options.androidProjectPath}
           chmod +x ./gradlew
           ./gradlew bundleRelease
+          aab_path=$(find app/build/outputs/bundle -type f -name '*production-release.aab' -print -quit)
+          aab_path=\${aab_path:-$(find app/build/outputs/bundle -type f -name '*.aab' -print -quit)}
+          if [ -z "$aab_path" ]; then
+            echo "No production AAB was produced"
+            exit 1
+          fi
+          echo "AAB_PATH=${options.androidProjectPath}/$aab_path" >> "$GITHUB_ENV"
 
       - name: Upload debug APK artifact
         if: \${{ env.BUILD_TARGET == 'debug-apk' }}
         uses: actions/upload-artifact@v4
         with:
           name: android-debug-apk-\${{ github.run_number }}
-          path: ${options.androidProjectPath}/app/build/outputs/apk/debug/app-debug.apk
+          path: \${{ env.ARTIFACT_PATH }}
           if-no-files-found: error
           retention-days: 14
 
@@ -219,7 +243,7 @@ ${playDecode}          keytool -list -keystore /tmp/release.keystore -storepass 
         uses: actions/upload-artifact@v4
         with:
           name: android-preview-apk-\${{ github.run_number }}
-          path: ${options.androidProjectPath}/app/build/outputs/apk/release/app-release.apk
+          path: \${{ env.ARTIFACT_PATH }}
           if-no-files-found: error
           retention-days: 14
 
@@ -228,7 +252,7 @@ ${playDecode}          keytool -list -keystore /tmp/release.keystore -storepass 
         uses: actions/upload-artifact@v4
         with:
           name: android-production-aab-\${{ github.run_number }}
-          path: ${options.androidProjectPath}/app/build/outputs/bundle/release/app-release.aab
+          path: \${{ env.AAB_PATH }}
           if-no-files-found: error
           retention-days: 30
 ${playDeployStep}`;
