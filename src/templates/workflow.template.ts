@@ -12,8 +12,12 @@ export function workflowTemplate(options: WorkflowTemplateOptions): string {
         env:
           SUPPLY_JSON_KEY: /tmp/play-store-key.json
           ANDROID_APPLICATION_ID: ${options.androidApplicationId}
+          ANDROID_PROJECT_DIR: ${options.androidProjectPath}
           PLAY_TRACK: \${{ vars.PLAY_TRACK || 'production' }}
           AAB_PATH: \${{ env.AAB_PATH }}
+          # The workflow already built the AAB in the previous step, so Fastlane
+          # must not try to run Gradle again (repo root has no gradlew).
+          SKIP_ANDROID_BUILD: "true"
         run: |
           bundle install --gemfile Gemfile
           bundle exec fastlane android deploy
@@ -87,7 +91,7 @@ jobs:
             process.exit(0);
           }
           let content = fs.readFileSync(gradleFile, 'utf8');
-          const pattern = /(versionCode\s+)(\d+)/;
+          const pattern = /(versionCode\\s+)(\\d+)/;
           const match = content.match(pattern);
           if (!match) {
             console.log('No versionCode found in build.gradle, skipping');

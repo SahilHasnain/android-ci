@@ -73,7 +73,7 @@ export async function runInitCommand(argv: string[]): Promise<void> {
       await fs.access(fastfilePath);
       console.log(yellow("Root fastlane/Fastfile already exists; leaving it unchanged."));
     } catch {
-      await writeFileSafe(fastfilePath, renderFastfile({ androidApplicationId, enableSentry: false }));
+      await writeFileSafe(fastfilePath, renderFastfile({ androidApplicationId, androidProjectPath, enableSentry: false }));
       console.log(green("Generated fastlane/Fastfile at the repository root."));
     }
     try {

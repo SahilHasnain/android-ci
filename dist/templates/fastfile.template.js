@@ -30,8 +30,12 @@ ${sentryCall}    ensure_play_store_key
     skip_build = ENV["SKIP_ANDROID_BUILD"] == "true"
     
     unless skip_build
-      # Build the bundle if not skipped
-      gradle(task: "clean bundleRelease")
+      # Build the bundle if not skipped. Expo keeps Gradle in the generated
+      # android/ folder, so point Gradle at that project directory.
+      gradle(
+        task: "clean bundleRelease",
+        project_dir: options[:project_dir] || ENV["ANDROID_PROJECT_DIR"] || "${options.androidProjectPath}"
+      )
     end
     
     upload_to_play_store(
