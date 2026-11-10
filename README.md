@@ -27,6 +27,10 @@ The workflow runs Expo prebuild on the GitHub runner. The generated `android/` d
 - **production** creates a signed AAB, uploads the artifact, and optionally deploys it to Google Play.
 - Pushes to `main` and pull requests use the debug APK path. Production is only started manually from Actions.
 
+## VersionCode increments
+
+The `increment_version_code` option bumps `expo.android.versionCode` in `app.config.js`/`app.config.ts`, falling back to `app.json` when no app config file exists. The generated `android/` folder is never edited, since Expo prebuild would overwrite it.
+
 ## GitHub Actions secrets
 
 Production signing requires:
