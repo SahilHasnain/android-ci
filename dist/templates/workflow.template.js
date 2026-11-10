@@ -208,7 +208,7 @@ ${playDecode}          keytool -list -keystore /tmp/release.keystore -storepass 
         if: \${{ env.BUILD_TARGET == 'production' }}
         env:
           ANDROID_KEYSTORE_PATH: /tmp/release.keystore
-          ANDROID_VERSION_CODE: \${{ github.run_number }}
+          ANDROID_PROJECT_DIR: ${options.androidProjectPath}
         run: node scripts/patch-android-release-signing.mjs
 
       - name: Build debug APK

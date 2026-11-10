@@ -29,7 +29,7 @@ The workflow runs Expo prebuild on the GitHub runner. The generated `android/` d
 
 ## VersionCode increments
 
-The `increment_version_code` option bumps `expo.android.versionCode` in `app.config.js`/`app.config.ts`, falling back to `app.json` when no app config file exists. The generated `android/` folder is never edited, since Expo prebuild would overwrite it.
+The `increment_version_code` option bumps `expo.android.versionCode` in `app.config.js`/`app.config.ts`, falling back to `app.json` when no app config file exists. The generated `android/` folder is never edited, since Expo prebuild would overwrite it. Production builds read that same value and write it into `android/app/build.gradle` before Gradle runs, so the AAB uses the app config versionCode instead of `github.run_number`.
 
 ## GitHub Actions secrets
 

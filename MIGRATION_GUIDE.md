@@ -7,7 +7,7 @@ The scaffold now assumes Expo prebuild and GitHub-hosted runners.
 - Keep generated `android/` ignored and out of source control.
 - Run `npx expo prebuild --platform android --no-install` in the workflow.
 - Keep `Gemfile` and `fastlane/Fastfile` at the application repository root.
-- Use `scripts/patch-android-release-signing.mjs` after prebuild for release signing and CI version codes.
+- Use `scripts/patch-android-release-signing.mjs` after prebuild for release signing and to apply the app config versionCode.
 
 ## Build choices
 
